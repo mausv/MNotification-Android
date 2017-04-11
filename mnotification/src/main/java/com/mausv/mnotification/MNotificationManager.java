@@ -37,6 +37,7 @@ public class MNotificationManager {
     private static final String NOTIFICATION_BODY = "n_body";
     private static final String NOTIFICATION_SUB_MESSAGE = "n_sub_message";
     private static final String NOTIFICATION_DAYS = "n_days";
+    private static final String NOTIFICATION_DESTINATION = "n_destination";
 
     /**
      * Identifiers for the clear method
@@ -163,7 +164,7 @@ public class MNotificationManager {
                     intent.getStringExtra(NOTIFICATION_TITLE),
                     intent.getStringExtra(NOTIFICATION_BODY),
                     intent.getStringExtra(NOTIFICATION_SUB_MESSAGE),
-                    context);
+                    context, (Class) intent.getSerializableExtra(NOTIFICATION_DESTINATION));
             mNotification.setNotificationBehavior(true, true);
             /**
              * Check if the day is within the excluded ones,
