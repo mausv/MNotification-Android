@@ -19,10 +19,12 @@ class MNotification {
     private int id;
     private Notification notification;
     private NotificationCompat.Builder notificationBuilder;
+    private MNotificationAction action;
 
-    public MNotification (int id, String title, String body, String subMessage, Context context, Class destination) {
+    public MNotification (int id, String title, String body, String subMessage, Context context, Class destination, MNotificationAction action) {
         this.id = id;
         this.context = context;
+        this.action = action;
         if(context != null) {
             notificationBuilder = new NotificationCompat.Builder(context);
 //            notificationBuilder.setSmallIcon(R.drawable.ic_launcher);
@@ -63,7 +65,11 @@ class MNotification {
         return id;
     }
 
-
+    public void executeAction(){
+        if (action != null){
+            action.execute();
+        }
+    }
 
     public void setNotificationBehavior(boolean enableVibration, boolean enableSound) {
         if(enableVibration) {

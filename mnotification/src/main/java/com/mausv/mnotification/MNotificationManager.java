@@ -16,6 +16,7 @@ import static android.content.Context.NOTIFICATION_SERVICE;
 
 /**
  * Library to handle notifications easily
+ *
  * @author Mauricio Silva
  * @version 0.1.0
  */
@@ -38,6 +39,7 @@ public class MNotificationManager {
     private static final String NOTIFICATION_SUB_MESSAGE = "n_sub_message";
     private static final String NOTIFICATION_DAYS = "n_days";
     private static final String NOTIFICATION_DESTINATION = "n_destination";
+    private static final String NOTIFICATION_ACTION = "n_action";
 
     /**
      * Identifiers for the clear method
@@ -65,12 +67,13 @@ public class MNotificationManager {
 
     /**
      * Exclude days from MNotificationManager
+     *
      * @param day Day(s) to exclude
      */
     public void exclude(Integer... day) {
         for (Integer dayObject : day) {
             for (int i = 0; i < days.size(); i++) {
-                if(dayObject.equals(days.get(i))) {
+                if (dayObject.equals(days.get(i))) {
                     days.set(i, -1);
                 }
             }
@@ -79,15 +82,16 @@ public class MNotificationManager {
 
     /**
      * Add to database for when the device gets rebooted
+     *
      * @param intentForReboot MIntent to save
-     * @param context Context to handle operation
+     * @param context         Context to handle operation
      */
     private static void saveForReboot(MIntent intentForReboot, Context context) {
-        if(db == null) {
+        if (db == null) {
             db = new MDatabaseHandler(context);
         }
 
-        if(db.getRebootNotification(intentForReboot.getId()) == null) {
+        if (db.getRebootNotification(intentForReboot.getId()) == null) {
             Log.d(TAG, "saveForReboot: added " + intentForReboot.getId());
             db.addRebootNotification(intentForReboot);
         } else {
@@ -99,21 +103,23 @@ public class MNotificationManager {
 
     /**
      * Public method to schedule a notification
+     *
      * @param notificationId Id to be set
-     * @param title Title of the notification
-     * @param body Body message of the notification
-     * @param subMessage Message of the notification when pulled down
-     * @param timer Timer that schedules the notification
+     * @param title          Title of the notification
+     * @param body           Body message of the notification
+     * @param subMessage     Message of the notification when pulled down
+     * @param timer          Timer that schedules the notification
      */
-    public void scheduleNotification(int notificationId, String title, String body, String subMessage, MNotificationTimer timer, boolean shouldScheduleAfterReboot) {
-        MIntent createdIntent = new MIntent(notificationId, title, body, subMessage, days, timer);
+    public void scheduleNotification(int notificationId, String title, String body, String subMessage, MNotificationTimer timer, MNotificationAction action, boolean shouldScheduleAfterReboot) {
+        MIntent createdIntent = new MIntent(notificationId, title, body, subMessage, days, timer, action);
         scheduleNotification(createdIntent, context, shouldScheduleAfterReboot);
     }
 
     /**
      * Schedule a notification with an MIntent
+     *
      * @param savedIntent MIntent to schedule
-     * @param context Context to handle operation
+     * @param context     Context to handle operation
      */
     private static void scheduleNotification(MIntent savedIntent, Context context, boolean shouldRescheduleAfterReboot) {
         Intent notificationIntent = new Intent(context, NotificationPublisher.class);
@@ -127,7 +133,7 @@ public class MNotificationManager {
 
         AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         MNotificationTimer timer = savedIntent.getTimer();
-        if(timer != null) {
+        if (timer != null) {
             //TODO: Fix timer after one day scheduling wrongly
             long timeToTriggerTimer = (timer.getTime() < System.currentTimeMillis() ? timer.getTime() + timer.getRepeatingIntervalInMilis() : timer.getTime());
             Log.d(TAG, "scheduleNotificationTime: " + timeToTriggerTimer);
@@ -139,10 +145,11 @@ public class MNotificationManager {
                     savedIntent.getBody(),
                     savedIntent.getSubMessage(),
                     savedIntent.getDays(),
-                    savedIntent.getTimer()
+                    savedIntent.getTimer(),
+                    savedIntent.getAction()
             );
 
-            if(shouldRescheduleAfterReboot) {
+            if (shouldRescheduleAfterReboot) {
                 saveForReboot(intentForReboot, context);
             }
         } else {
@@ -156,6 +163,7 @@ public class MNotificationManager {
      */
     public static class NotificationPublisher extends BroadcastReceiver {
         private final String TAG = "MNotificationManager";
+
         @Override
         public void onReceive(final Context context, Intent intent) {
             Log.d(TAG, "onReceive: " + intent.getStringExtra(NOTIFICATION_TITLE));
@@ -164,7 +172,8 @@ public class MNotificationManager {
                     intent.getStringExtra(NOTIFICATION_TITLE),
                     intent.getStringExtra(NOTIFICATION_BODY),
                     intent.getStringExtra(NOTIFICATION_SUB_MESSAGE),
-                    context, (Class) intent.getSerializableExtra(NOTIFICATION_DESTINATION));
+                    context, (Class) intent.getSerializableExtra(NOTIFICATION_DESTINATION),
+                    (MNotificationAction) intent.getSerializableExtra(NOTIFICATION_ACTION));
             mNotification.setNotificationBehavior(true, true);
             /**
              * Check if the day is within the excluded ones,
@@ -172,6 +181,7 @@ public class MNotificationManager {
              */
             if (intent.getIntegerArrayListExtra(NOTIFICATION_DAYS).contains(Calendar.getInstance().get(Calendar.DAY_OF_WEEK))) {
                 Log.d(TAG, "sendNotification: sent" + mNotification);
+                mNotification.executeAction();
                 sendNotification(mNotification.getId(), mNotification.getNotification(), context);
             } else {
                 Log.d(TAG, "sendNotification: not sent");
@@ -192,9 +202,9 @@ public class MNotificationManager {
     public static class NotificationOnBoot extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
-            if(intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
+            if (intent.getAction().equals("android.intent.action.BOOT_COMPLETED")) {
                 Log.d(TAG, "onReceive: after boot");
-                if(db == null){
+                if (db == null) {
                     db = new MDatabaseHandler(context);
                 }
                 for (MIntent mIntent : db.getRebootNotifications()) {
@@ -206,6 +216,7 @@ public class MNotificationManager {
 
     /**
      * Public method to clear the notification
+     *
      * @param notificationId Id of the notification to clear
      * @return If the action was completed successfully with CLEAR or NOT_FOUND
      */
@@ -215,11 +226,12 @@ public class MNotificationManager {
 
     /**
      * Private method to clear the notification
+     *
      * @param notificationId Id of the notification to clear
      * @return If the action was completed successfully with an int
      */
     private int clearNotification(int notificationId) {
-        if(db == null){
+        if (db == null) {
             db = new MDatabaseHandler(context);
         }
         Log.d(TAG, "clearNotificationCount: " + db.getRebootNotificationsCount());
@@ -227,7 +239,7 @@ public class MNotificationManager {
         /**
          * If the notification to find is not null, proceed to remove
          */
-        if(notificationToRemove != null) {
+        if (notificationToRemove != null) {
             db.removeRebootNotification(notificationToRemove);
             Log.d(TAG, "deleted: " + notificationId);
             return CLEAR;

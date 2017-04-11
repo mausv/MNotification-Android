@@ -7,4 +7,21 @@
 
     </application>
 
+
+    <!-- Register the Alarm Receiver -->
+    <receiver android:name=".MNotificationManager$NotificationPublisher">
+        <intent-filter>
+            <action android:name=".MNotificationManager.NotificationPublisher" />
+        </intent-filter>
+    </receiver>
+
+    <!-- Register the Alarm Receiver for notifications after boot -->
+    <receiver
+        android:name=".MNotificationManager$NotificationOnBoot"
+        android:enabled="true"
+        android:exported="true">
+        <intent-filter>
+            <action android:name="android.intent.action.BOOT_COMPLETED" />
+        </intent-filter>
+    </receiver>
 </manifest>

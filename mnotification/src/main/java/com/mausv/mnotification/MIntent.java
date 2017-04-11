@@ -13,14 +13,19 @@ class MIntent {
     private String subMessage;
     private ArrayList<Integer> days;
     private MNotificationTimer timer;
+    private MNotificationAction action;
 
-    public MIntent(int id, String title, String body, String subMessage, ArrayList<Integer> daysAsJson, MNotificationTimer timer) {
+    public MIntent(int id, String title, String body, String subMessage, ArrayList<Integer> daysAsJson, MNotificationTimer timer, MNotificationAction action) {
         this.id = id;
         this.title = title;
         this.body = body;
         this.subMessage = subMessage;
         this.days = daysAsJson;
         this.timer = timer;
+    }
+
+    public MNotificationAction getAction() {
+        return action;
     }
 
     public int getId() {

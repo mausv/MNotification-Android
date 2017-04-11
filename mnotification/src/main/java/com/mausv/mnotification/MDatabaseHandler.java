@@ -33,6 +33,7 @@ class MDatabaseHandler extends SQLiteOpenHelper{
     private static final String TRN_SUB_MESSAGE = "sub_message";
     private static final String TRN_DAYS = "days";
     private static final String TRN_TIMER = "timer";
+    private static final String TRN_ACTION = "action";
 
 
     MDatabaseHandler(Context context) {
@@ -43,7 +44,8 @@ class MDatabaseHandler extends SQLiteOpenHelper{
     public void onCreate(SQLiteDatabase db) {
         final String CREATE_TABLE_REBOOT_NOTIFICATIONS = "CREATE TABLE " + TABLE_REBOOT_NOTIFICATIONS + "("
                 + TRN_ID + " INTEGER PRIMARY KEY, " + TRN_TITLE + " TEXT," + TRN_BODY + " TEXT,"
-                + TRN_SUB_MESSAGE + " TEXT," + TRN_DAYS + " TEXT," + TRN_TIMER + " TEXT" + ")";
+                + TRN_SUB_MESSAGE + " TEXT," + TRN_DAYS + " TEXT," + TRN_TIMER + " TEXT,"
+                + TRN_ACTION + " TEXT)";
         db.execSQL(CREATE_TABLE_REBOOT_NOTIFICATIONS);
     }
 
@@ -132,13 +134,15 @@ class MDatabaseHandler extends SQLiteOpenHelper{
                 ArrayList<Integer> days = gson.fromJson(cursor.getString(4), new TypeToken<ArrayList<Integer>>() {
                 }.getType());
                 MNotificationTimer timer = gson.fromJson(cursor.getString(5), MNotificationTimer.class);
+                MNotificationAction action = gson.fromJson(cursor.getString(6), MNotificationAction.class);
                 return new MIntent(
                         Integer.parseInt(cursor.getString(0)),
                         cursor.getString(1),
                         cursor.getString(2),
                         cursor.getString(3),
                         days,
-                        timer
+                        timer,
+                        action
                 );
             }
         }
@@ -162,13 +166,15 @@ class MDatabaseHandler extends SQLiteOpenHelper{
             do {
                 ArrayList<Integer> days = gson.fromJson(cursor.getString(4), new TypeToken<ArrayList<Integer>>(){}.getType());
                 MNotificationTimer timer = gson.fromJson(cursor.getString(5), MNotificationTimer.class);
+                MNotificationAction action = gson.fromJson(cursor.getString(6), MNotificationAction.class);
                 MIntent mIntent = new MIntent(
                         Integer.parseInt(cursor.getString(0)),
                         cursor.getString(1),
                         cursor.getString(2),
                         cursor.getString(3),
                         days,
-                        timer
+                        timer,
+                        action
                 );
                 list.add(mIntent);
             } while(cursor.moveToNext());
